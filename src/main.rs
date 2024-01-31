@@ -6,7 +6,8 @@ use panic_halt as _;
 
 #[rtic::app(device = rp_pico::hal::pac, peripherals = true)]
 mod app {
-    use defmt::info;
+    use cortex_m::interrupt::Mutex;
+    // use defmt::info;
     use rp_pico::hal;
     use rp_pico::hal::Clock;
     use cortex_m;
@@ -59,7 +60,7 @@ mod app {
         (
             Shared {
                 channel: channel,
-                delay
+                delay: delay
             },
             Local {},
             init::Monotonics(),
@@ -72,24 +73,22 @@ mod app {
     fn idle(cx: idle::Context) -> ! {
         let mut channel = cx.shared.channel;
         let mut delay = cx.shared.delay;
-         
+
+        
         loop {
-            channel.lock(|channel| {
+            let cr = &mut channel;
+            let dr = &mut delay;
+            (cr, dr).lock(|c, d| {
                 for i in (1..25_000).step_by(1000) {
-                    info!("UP = {}", i);
-                    channel.set_duty(i);
-                    delay.lock(|d| d.delay_ms(100));
+                    defmt::info!("UP = {}", i);
+                    c.set_duty(i);
+                    d.delay_ms(100);
                 }
-                
-            });
-            channel.lock(|channel| {
-                
-                for i in (1..=25_000).rev().step_by(1000) {
-                    info!("DOWN = {}", i);
-                    channel.set_duty(i);
-                    delay.lock(|d| d.delay_ms(100));
+                for i in (1..25_000).rev().step_by(1000) {
+                    defmt::info!("UP = {}", i);
+                    c.set_duty(i);
+                    d.delay_ms(100);
                 }
-    
             });
             cortex_m::asm::nop();
         }
