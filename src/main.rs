@@ -8,24 +8,16 @@ use panic_halt as _;
 mod app {
     extern crate alloc;
 
-    use core::convert::Infallible;
-
-    use alloc::boxed::Box;
-    use hal::gpio::bank0::Gpio0;
-    use hal::gpio::{DynPin, Input, Pin, PinId, PinMode, PullDown, PushPullOutput, DYN_PUSH_PULL_OUTPUT};
-    // use alloc::{vec, vec::Vec};
-    // use cortex_m::interrupt::Mutex;
-    // use hal::gpio::{DynPinId, Function, PushPullOutput};
-    // use defmt::info;
+    use hal::gpio::DynPin;
     use rp_pico::hal;
+    use rp_pico::hal::gpio::pin::Pin;
     use rp_pico::hal::Clock;
     use cortex_m;
     use core::convert::TryInto;
+    use embedded_hal::digital::v2::OutputPin;
 
     type PinsArray = [DynPin; 4];
 
-
-   
     #[shared]
     struct Shared {
     }
@@ -60,7 +52,7 @@ mod app {
             sio.gpio_bank0,
             &mut resets,
         );
-        // let p = pins.gpio13.into_pull_up_input();
+
         let pinarray: PinsArray = [
             pins.gpio2.into(),
             pins.gpio3.into(),
@@ -68,15 +60,6 @@ mod app {
             pins.gpio5.into(),
         ];
 
-    
-        // ... and so on for each pin you want to add
-        // let pwm_slices = hal::pwm::Slices::new(c.device.PWM, &mut resets);
-        // let mut pwm: hal::pwm::Slice<hal::pwm::Pwm7, hal::pwm::FreeRunning> = pwm_slices.pwm7;
-        // pwm.set_ph_correct();
-        // pwm.enable();
-
-        // let mut channel =  pwm.channel_b;
-        // channel.output_to(pins.gpio15);
 
         (
             Shared {
@@ -99,21 +82,26 @@ mod app {
             match i {
                 0 => {
                     pin.into_push_pull_output();
-                    let pin: Pin<hal::gpio::bank0::Gpio0, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
-                    // pin
+                    let mut pin: Pin<hal::gpio::bank0::Gpio0, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    OutputPin::set_high(&mut pin).expect("0 pin is not set high");
                 },
                 1 => {
                     pin.into_push_pull_output();
-                    let gpio0: Pin<hal::gpio::bank0::Gpio1, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    let mut pin: Pin<hal::gpio::bank0::Gpio1, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    OutputPin::set_high(&mut pin).unwrap();
                 }
                 2 => {
                     pin.into_push_pull_output();
-                    let gpio0: Pin<hal::gpio::bank0::Gpio1, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    let mut pin: Pin<hal::gpio::bank0::Gpio2, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    OutputPin::set_high(&mut pin).unwrap();
+                }
+                4 => {
+                    pin.into_push_pull_output();
+                    let mut pin: Pin<hal::gpio::bank0::Gpio3, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
+                    OutputPin::set_high(&mut pin).unwrap();
                 }
                 _ => break
             }
-            // let id = pin.id();
-            // id.num
         }
         loop {
             cortex_m::asm::nop();
