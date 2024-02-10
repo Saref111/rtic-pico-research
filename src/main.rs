@@ -39,4 +39,5 @@ mod app {
         loop {
             cortex_m::asm::nop();
         }
-    }}
+    }
+}
