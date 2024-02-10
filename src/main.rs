@@ -6,16 +6,11 @@ use panic_halt as _;
 
 #[rtic::app(device = rp_pico::hal::pac, peripherals = true)]
 mod app {
-    extern crate alloc;
-
-    use hal::gpio::DynPin;
+    use hal::gpio::{DynPin, DYN_PUSH_PULL_OUTPUT};
     use rp_pico::hal;
-    use rp_pico::hal::gpio::pin::Pin;
     use rp_pico::hal::Clock;
     use cortex_m;
-    use core::convert::TryInto;
     use embedded_hal::digital::v2::OutputPin;
-
     type PinsArray = [DynPin; 4];
 
     #[shared]
@@ -54,10 +49,10 @@ mod app {
         );
 
         let pinarray: PinsArray = [
-            pins.gpio2.into(),
-            pins.gpio3.into(),
-            pins.gpio4.into(),
-            pins.gpio5.into(),
+            pins.gpio15.into(),
+            pins.gpio14.into(),
+            pins.gpio13.into(),
+            pins.gpio12.into(),
         ];
 
 
@@ -65,7 +60,6 @@ mod app {
             Shared {
             },
             Local {
-                
                 a: pinarray
             },
             init::Monotonics(),
@@ -76,32 +70,12 @@ mod app {
         local = [a]
     )]
     fn idle(cx: idle::Context) -> ! {
-        let mut pins = cx.local.a;
+        let pins = cx.local.a;
 
-        for (i, pin) in pins.iter_mut().enumerate() {
-            match i {
-                0 => {
-                    pin.into_push_pull_output();
-                    let mut pin: Pin<hal::gpio::bank0::Gpio0, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
-                    OutputPin::set_high(&mut pin).expect("0 pin is not set high");
-                },
-                1 => {
-                    pin.into_push_pull_output();
-                    let mut pin: Pin<hal::gpio::bank0::Gpio1, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
-                    OutputPin::set_high(&mut pin).unwrap();
-                }
-                2 => {
-                    pin.into_push_pull_output();
-                    let mut pin: Pin<hal::gpio::bank0::Gpio2, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
-                    OutputPin::set_high(&mut pin).unwrap();
-                }
-                4 => {
-                    pin.into_push_pull_output();
-                    let mut pin: Pin<hal::gpio::bank0::Gpio3, hal::gpio::PushPullOutput> = (*pin).try_into().unwrap();
-                    OutputPin::set_high(&mut pin).unwrap();
-                }
-                _ => break
-            }
+        for pin in pins.iter_mut() {
+            pin.into_push_pull_output();
+            pin.try_into_mode(DYN_PUSH_PULL_OUTPUT).unwrap();
+            pin.set_high().unwrap();
         }
         loop {
             cortex_m::asm::nop();
